@@ -1,0 +1,316 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>שגרת בוקר</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- React & ReactDOM -->
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <!-- Babel for JSX -->
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Heebo:wght@400;700&display=swap');
+        body { font-family: 'Heebo', sans-serif; margin: 0; padding: 0; }
+        
+        /* הסתרת פס גלילה בתוך ה-iframe אם אפשר */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #f1f1f1;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #c7c7cc;
+            border-radius: 4px;
+        }
+
+        @media print {
+            @page { margin: 0.5cm; }
+            body { background: white; }
+            .print-hidden { display: none !important; }
+            .print-block { display: block !important; }
+            .print-shadow-none { box-shadow: none !important; }
+            .print-border-2 { border-width: 2px !important; }
+            .print-max-w-full { max-width: 100% !important; }
+            .print-layout-fix { display: block !important; width: 100% !important; }
+        }
+    </style>
+</head>
+<body class="bg-gray-50 text-gray-900 overflow-x-hidden">
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useState, useEffect } = React;
+
+        // --- Icons ---
+        const Icons = {
+            Sun: (props) => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}><circle cx="12" cy="12" r="4"/><path d="M12 2v2"/><path d="M12 20v2"/><path d="m4.93 4.93 1.41 1.41"/><path d="m17.66 17.66 1.41 1.41"/><path d="M2 12h2"/><path d="M20 12h2"/><path d="m6.34 17.66-1.41 1.41"/><path d="m19.07 4.93-1.41 1.41"/></svg>,
+            Shirt: (props) => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}><path d="M20.38 3.46 16 2a4 4 0 0 1-8 0L3.62 3.46a2 2 0 0 0-1.34 2.23l.58 3.47a1 1 0 0 0 .99.84H6v10c0 1.1.9 2 2 2h8a2 2 0 0 0 2-2V10h2.15a1 1 0 0 0 .99-.84l.58-3.47a2 2 0 0 0-1.34-2.23z"/></svg>,
+            Sparkles: (props) => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}><path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L12 3Z"/><path d="M5 3v4"/><path d="M9 3v4"/><path d="M3 5h4"/><path d="M3 9h4"/></svg>,
+            Utensils: (props) => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}><path d="M3 2v7c0 1.1.9 2 2 2h4a2 2 0 0 0 2-2V2"/><path d="M7 2v20"/><path d="M21 15V2v0a5 5 0 0 0-5 5v6c0 1.1.9 2 2 2h3Zm0 0v7"/></svg>,
+            Footprints: (props) => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}><path d="M4 16v-2.38C4 11.5 2.97 10.5 3 8c.03-2.72 1.49-6 4.5-6C9.37 2 11 3.8 11 8c0 2.85-.67 5.5-2 8"/><path d="M20 20v-2.38c0-2.12 1.03-3.12 1-5.62-.03-2.72-1.49-6-4.5-6C14.63 6 13 7.8 13 12c0 2.85.67 5.5 2 8"/><path d="M16 17h4"/><path d="M4 16h4"/></svg>,
+            Backpack: (props) => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}><path d="M4 10a4 4 0 0 1 4-4h8a4 4 0 0 1 4 4v10a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2Z"/><path d="M9 6V4a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v2"/><path d="M8 21v-5a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v5"/><path d="M8 10h8"/><path d="M8 18h8"/></svg>,
+            DoorOpen: (props) => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}><path d="M13 4h3a2 2 0 0 1 2 2v14"/><path d="M2 20h3"/><path d="M13 20h9"/><path d="M10 12v.01"/><path d="M13 4.562v16.157a1 1 0 0 1-1.242.97L5 20V5.562a2 2 0 0 1 1.515-1.94l4-1A2 2 0 0 1 13 4.561Z"/></svg>,
+            Trophy: (props) => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"/><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"/><path d="M4 22h16"/><path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"/><path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"/><path d="M18 2H6v7a6 6 0 0 0 12 0V2Z"/></svg>,
+            Printer: (props) => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect width="12" height="8" x="6" y="14"/></svg>,
+            RotateCcw: (props) => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>,
+            Play: (props) => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}><polygon points="5 3 19 12 5 21 5 3"/></svg>,
+            Pause: (props) => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}><rect width="4" height="16" x="6" y="4"/><rect width="4" height="16" x="14" y="4"/></svg>
+        };
+
+        function MorningRoutine() {
+            const initialTasks = [
+                { id: 1, text: 'לקום עם חיוך', icon: <Icons.Sun className="w-8 h-8 text-yellow-500" />, completed: false, color: 'bg-yellow-100 border-yellow-300' },
+                { id: 2, text: 'להתלבש יפה', icon: <Icons.Shirt className="w-8 h-8 text-pink-500" />, completed: false, color: 'bg-pink-100 border-pink-300' },
+                { id: 3, text: 'לצחצח שיניים', icon: <Icons.Sparkles className="w-8 h-8 text-blue-500" />, completed: false, color: 'bg-blue-100 border-blue-300' },
+                { id: 4, text: 'לאכול ארוחת בוקר', icon: <Icons.Utensils className="w-8 h-8 text-orange-500" />, completed: false, color: 'bg-orange-100 border-orange-300' },
+                { id: 5, text: 'לנעול נעליים', icon: <Icons.Footprints className="w-8 h-8 text-purple-500" />, completed: false, color: 'bg-purple-100 border-purple-300' },
+                { id: 6, text: 'לקחת את התיק', icon: <Icons.Backpack className="w-8 h-8 text-red-500" />, completed: false, color: 'bg-red-100 border-red-300' },
+                { id: 7, text: 'לצאת לדרך!', icon: <Icons.DoorOpen className="w-8 h-8 text-green-500" />, completed: false, color: 'bg-green-100 border-green-300' },
+            ];
+
+            const [tasks, setTasks] = useState(initialTasks);
+            const [showCelebration, setShowCelebration] = useState(false);
+            const [isTimerRunning, setIsTimerRunning] = useState(false);
+            const [elapsedSeconds, setElapsedSeconds] = useState(0);
+            
+            const GREEN_ZONE = 15 * 60;
+            const YELLOW_ZONE = 10 * 60;
+            const RED_ZONE = 10 * 60;
+
+            useEffect(() => {
+                let interval = null;
+                if (isTimerRunning) {
+                    interval = setInterval(() => {
+                        setElapsedSeconds((prev) => prev + 1);
+                    }, 1000);
+                }
+                return () => clearInterval(interval);
+            }, [isTimerRunning]);
+
+            // Filter out exit task for progress calculation
+            const checklistTasks = tasks.filter(t => t.id !== 7);
+            const completedCount = checklistTasks.filter(t => t.completed).length;
+            const progress = (completedCount / checklistTasks.length) * 100;
+
+            useEffect(() => {
+                // Celebration shows when all checkable tasks are done
+                setShowCelebration(completedCount === checklistTasks.length);
+            }, [completedCount, checklistTasks.length]);
+
+            const toggleTask = (id) => {
+                if (id === 7) return; // Exit task is not togglable
+                setTasks(tasks.map(task => 
+                    task.id === id ? { ...task, completed: !task.completed } : task
+                ));
+            };
+
+            const resetTasks = () => {
+                setTasks(initialTasks.map(t => ({ ...t, completed: false })));
+                setShowCelebration(false);
+                setElapsedSeconds(0);
+                setIsTimerRunning(false);
+            };
+
+            const handlePrint = () => {
+                window.print();
+            };
+
+            const getTimerEmoji = () => {
+                if (elapsedSeconds < GREEN_ZONE) return "😊";
+                if (elapsedSeconds < GREEN_ZONE + YELLOW_ZONE) return "😐";
+                return "😡";
+            };
+
+            const handRotation = elapsedSeconds * 0.1;
+            const clockBackground = isTimerRunning || elapsedSeconds > 0 
+                ? `conic-gradient(
+                    #4ade80 0deg 90deg, 
+                    #facc15 90deg 150deg, 
+                    #ef4444 150deg 210deg, 
+                    #f3f4f6 210deg 360deg
+                  )`
+                : '#f3f4f6';
+
+            return (
+                // השינוי העיקרי כאן: במקום min-h-screen השתמשנו ב-h-full וב-p-2 לנייד
+                <div className="h-full min-h-full bg-gradient-to-br from-indigo-50 to-pink-50 p-2 md:p-8 font-sans">
+                    
+                    {/* Main Layout Container */}
+                    {/* השינוי כאן: flex-col-reverse במובייל שם את השעון למעלה */}
+                    <div className="max-w-5xl mx-auto flex flex-col-reverse md:flex-row gap-4 md:gap-6 items-start">
+                        
+                        {/* RIGHT SIDE (Main): Task List */}
+                        <div className="flex-grow w-full md:w-2/3 bg-white rounded-2xl md:rounded-3xl shadow-xl overflow-hidden border-4 border-indigo-100 print-shadow-none print-border-2 print-layout-fix">
+                            
+                            {/* Header */}
+                            <div className="bg-indigo-500 p-4 md:p-6 text-center relative overflow-hidden print-bg-white print-text-black">
+                                <div className="absolute top-0 left-0 w-full h-full opacity-20 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')]"></div>
+                                <h1 className="text-2xl md:text-3xl font-bold text-white relative z-10 print-text-black">הבוקר של האלופה! 👑</h1>
+                                <p className="text-indigo-100 mt-1 md:mt-2 relative z-10 print-text-gray-600 text-sm md:text-base">בואי נתארגן ונתחיל את היום</p>
+                            </div>
+
+                            {/* Progress Bar */}
+                            <div className="px-4 md:px-6 pt-4 md:pt-6 print-hidden">
+                                <div className="flex justify-between text-xs md:text-sm text-gray-500 mb-2 font-bold">
+                                    <span>התקדמות: {completedCount} מתוך {checklistTasks.length}</span>
+                                    <span>{Math.round(progress)}%</span>
+                                </div>
+                                <div className="w-full bg-gray-200 rounded-full h-3 md:h-4 overflow-hidden">
+                                    <div 
+                                        className="bg-gradient-to-r from-pink-400 to-indigo-500 h-3 md:h-4 rounded-full transition-all duration-500 ease-out"
+                                        style={{ width: `${progress}%` }}
+                                    ></div>
+                                </div>
+                            </div>
+
+                            {/* Task List */}
+                            <div className="p-4 md:p-6 space-y-3 md:space-y-4">
+                                {checklistTasks.map((task) => (
+                                    <div 
+                                        key={task.id}
+                                        onClick={() => toggleTask(task.id)}
+                                        className={`
+                                            group flex items-center p-3 md:p-4 rounded-xl md:rounded-2xl border-2 transition-all duration-300 cursor-pointer transform hover:scale-[1.01] active:scale-95
+                                            ${task.completed ? 'bg-gray-50 border-gray-200 opacity-60 grayscale-[0.5]' : `${task.color} hover:shadow-md`}
+                                            print-border-gray-300 print-bg-white print-opacity-100 print-grayscale-0
+                                        `}
+                                    >
+                                        {/* Checkbox circle */}
+                                        <div className={`
+                                            w-6 h-6 md:w-8 md:h-8 rounded-full border-2 flex items-center justify-center ml-3 md:ml-4 transition-colors duration-300 flex-shrink-0
+                                            ${task.completed ? 'bg-green-500 border-green-500' : 'bg-white border-gray-300 group-hover:border-indigo-400'}
+                                            print-w-6 print-h-6 print-border-black
+                                        `}>
+                                            {task.completed && <span className="text-white font-bold text-sm md:text-lg">✓</span>}
+                                        </div>
+
+                                        <div className="ml-3 md:ml-4 transform group-hover:rotate-12 transition-transform duration-300 flex-shrink-0">
+                                            {React.cloneElement(task.icon, { className: "w-6 h-6 md:w-8 md:h-8 " + task.icon.props.className.split(' ').filter(c => !c.startsWith('w-') && !c.startsWith('h-')).join(' ') })}
+                                        </div>
+
+                                        <div className="flex-grow">
+                                            <span className={`text-base md:text-lg font-bold text-gray-800 transition-all duration-300 ${task.completed ? 'line-through text-gray-500' : ''}`}>
+                                                {task.text}
+                                            </span>
+                                        </div>
+                                    </div>
+                                ))}
+
+                                {/* Final "Exit" Task */}
+                                <div className={`
+                                    flex items-center p-3 md:p-4 rounded-xl md:rounded-2xl border-2 border-dashed border-green-200 bg-green-50 mt-4 md:mt-6
+                                    ${showCelebration ? 'opacity-100 scale-100' : 'opacity-50 scale-95 grayscale'}
+                                    transition-all duration-500
+                                `}>
+                                    <div className="w-6 h-6 md:w-8 md:h-8 ml-3 md:ml-4 flex items-center justify-center flex-shrink-0">
+                                        <div className="w-2 h-2 bg-green-300 rounded-full"></div>
+                                    </div>
+                                    <div className="ml-3 md:ml-4 flex-shrink-0">
+                                        <Icons.DoorOpen className="w-6 h-6 md:w-8 md:h-8 text-green-600" />
+                                    </div>
+                                    <div className="flex-grow">
+                                        <span className="text-base md:text-lg font-bold text-green-800">
+                                            {initialTasks.find(t => t.id === 7).text}
+                                        </span>
+                                    </div>
+                                    {showCelebration && <div className="text-xl md:text-2xl animate-bounce">🌟</div>}
+                                </div>
+                            </div>
+
+                            {/* Celebration Overlay/Message */}
+                            {showCelebration && (
+                                <div className="p-4 md:p-6 text-center animate-bounce print-hidden">
+                                    <div className="inline-block p-3 md:p-4 bg-yellow-100 rounded-full mb-2">
+                                        <Icons.Trophy className="w-10 h-10 md:w-12 md:h-12 text-yellow-500" />
+                                    </div>
+                                    <h2 className="text-xl md:text-2xl font-bold text-indigo-600">כל הכבוד! את מוכנה! 🎉</h2>
+                                </div>
+                            )}
+                        </div>
+
+                        {/* LEFT SIDE (Sidebar): Clock & Controls */}
+                        <div className="w-full md:w-1/3 flex flex-col gap-4 print-hidden">
+                            
+                            {/* Clock Card */}
+                            <div className="bg-white rounded-2xl md:rounded-3xl shadow-lg border-4 border-indigo-50 p-4 md:p-6 flex flex-col items-center justify-center sticky top-4">
+                                <h3 className="text-lg md:text-xl font-bold text-gray-600 mb-2 md:mb-4">זמן בוקר</h3>
+                                
+                                <div className="relative w-32 h-32 md:w-48 md:h-48 rounded-full shadow-inner border-4 border-gray-100 bg-gray-50 flex items-center justify-center mb-4 md:mb-6 transition-all duration-500"
+                                    style={{ background: clockBackground }}>
+                                    
+                                    <div className="absolute inset-0 rounded-full border-4 border-white/50"></div>
+                                    {/* Numbers */}
+                                    <div className="absolute top-1 md:top-2 left-1/2 -translate-x-1/2 font-bold text-gray-300 text-xs md:text-base">12</div>
+                                    <div className="absolute right-2 md:right-3 top-1/2 -translate-y-1/2 font-bold text-gray-300 text-xs md:text-base">3</div>
+                                    <div className="absolute bottom-1 md:bottom-2 left-1/2 -translate-x-1/2 font-bold text-gray-300 text-xs md:text-base">6</div>
+                                    <div className="absolute left-2 md:left-3 top-1/2 -translate-y-1/2 font-bold text-gray-300 text-xs md:text-base">9</div>
+
+                                    {/* Hand */}
+                                    <div 
+                                        className="absolute top-1/2 left-1/2 w-1 md:w-1.5 h-14 md:h-20 bg-indigo-600 rounded-full origin-bottom transition-transform duration-1000 ease-linear shadow-sm z-20"
+                                        style={{ transform: `translate(-50%, -100%) rotate(${handRotation}deg)` }}
+                                    ></div>
+                                    
+                                    <div className="absolute top-1/2 left-1/2 w-3 h-3 md:w-4 md:h-4 bg-indigo-800 rounded-full -translate-x-1/2 -translate-y-1/2 z-30 border-2 border-white"></div>
+
+                                    {(isTimerRunning || elapsedSeconds > 0) && (
+                                        <div className="absolute bottom-6 md:bottom-10 left-1/2 -translate-x-1/2 text-2xl md:text-3xl animate-bounce z-10 drop-shadow-md">
+                                            {getTimerEmoji()}
+                                        </div>
+                                    )}
+                                </div>
+
+                                {/* Controls */}
+                                <div className="flex flex-col w-full gap-2 md:gap-3">
+                                    {!isTimerRunning ? (
+                                        <button 
+                                            onClick={() => setIsTimerRunning(true)}
+                                            className="flex items-center justify-center gap-2 bg-green-500 hover:bg-green-600 text-white py-2 md:py-3 rounded-xl font-bold shadow-lg transition-transform active:scale-95 w-full text-sm md:text-base"
+                                        >
+                                            <Icons.Play size={20} fill="currentColor" /> התחל מירוץ
+                                        </button>
+                                    ) : (
+                                        <button 
+                                            onClick={() => setIsTimerRunning(false)}
+                                            className="flex items-center justify-center gap-2 bg-yellow-500 hover:bg-yellow-600 text-white py-2 md:py-3 rounded-xl font-bold shadow-lg transition-transform active:scale-95 w-full text-sm md:text-base"
+                                        >
+                                            <Icons.Pause size={20} fill="currentColor" /> הפסקה
+                                        </button>
+                                    )}
+                                    
+                                    <div className="flex gap-2">
+                                        <button 
+                                            onClick={resetTasks}
+                                            className="flex-1 flex items-center justify-center gap-2 bg-white text-gray-600 border border-gray-200 py-2 rounded-xl hover:bg-gray-50 font-medium text-xs md:text-sm transition-colors"
+                                        >
+                                            <Icons.RotateCcw size={16} /> איפוס
+                                        </button>
+                                        <button 
+                                            onClick={handlePrint}
+                                            className="flex-1 flex items-center justify-center gap-2 bg-indigo-50 text-indigo-600 border border-indigo-100 py-2 rounded-xl hover:bg-indigo-100 font-medium text-xs md:text-sm transition-colors"
+                                        >
+                                            <Icons.Printer size={16} /> הדפסה
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                  
+                    <div className="hidden print-block text-center mt-8 text-gray-400 text-sm">
+                        נוצר באהבה לדפוס
+                    </div>
+                </div>
+            );
+        }
+
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<MorningRoutine />);
+    </script>
+</body>
+</html>
