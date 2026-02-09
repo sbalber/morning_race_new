@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>שיקוי הבוקר - Morning Potions</title>
+    <title>בוקר קסום - Morning Potions</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
     <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
@@ -11,13 +11,28 @@
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
     
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Heebo:wght@400;700&display=swap');
-        body { font-family: 'Heebo', sans-serif; background-color: #Fdfbf7; } /* Cream/Cloud White background */
+        @import url('https://fonts.googleapis.com/css2?family=Varela+Round&display=swap');
         
-        /* Custom Scrollbar */
-        ::-webkit-scrollbar { width: 8px; }
-        ::-webkit-scrollbar-track { background: #f1f1f1; }
-        ::-webkit-scrollbar-thumb { background: #c7c7cc; border-radius: 4px; }
+        body { 
+            font-family: 'Varela Round', sans-serif; /* A rounder, cuter font */
+            background-color: #fdfbf7;
+            /* Magical Forest Background */
+            background-image: url('https://images.unsplash.com/photo-1629196914375-f7e48f477b6d?q=80&w=2500&auto=format&fit=crop');
+            background-size: cover;
+            background-position: center;
+            background-attachment: fixed;
+        }
+
+        /* Float Animation for Animals */
+        @keyframes float {
+            0% { transform: translateY(0px) rotate(0deg); }
+            50% { transform: translateY(-10px) rotate(2deg); }
+            100% { transform: translateY(0px) rotate(0deg); }
+        }
+        
+        .mascot-float {
+            animation: float 4s ease-in-out infinite;
+        }
 
         /* Liquid Animation */
         @keyframes wave {
@@ -28,15 +43,35 @@
         .liquid-wave {
             animation: wave 4s linear infinite;
         }
+
+        /* Glassmorphism Classes */
+        .glass-panel {
+            background: rgba(255, 255, 255, 0.85);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 2px solid rgba(255, 255, 255, 0.5);
+            box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.15);
+        }
+
+        .glass-card {
+            background: rgba(255, 255, 255, 0.7);
+            border: 1px solid rgba(255, 255, 255, 0.6);
+            backdrop-filter: blur(4px);
+        }
+
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
     </style>
 </head>
-<body class="text-gray-900 overflow-x-hidden min-h-screen">
+<body class="text-gray-800 overflow-x-hidden min-h-screen">
     <div id="root"></div>
 
     <script type="text/babel">
         const { useState, useEffect, useRef } = React;
 
-        // --- Configuration Constants ---
+        // --- Configuration ---
         const TARGETS = {
             BLUE: { limit: 30 * 60, name: "שיקוי הקרח", color: "#00C2FF", bg: "bg-cyan-100", stars: 3, id: 'blue' },
             GREEN: { limit: 45 * 60, duration: 15 * 60, name: "שיקוי הטבע", color: "#00E676", bg: "bg-green-100", stars: 2, id: 'green' },
@@ -48,13 +83,13 @@
 
         // --- Icons ---
         const Icons = {
-            Sun: (props) => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}><circle cx="12" cy="12" r="4"/><path d="M12 2v2"/><path d="M12 20v2"/><path d="m4.93 4.93 1.41 1.41"/><path d="m17.66 17.66 1.41 1.41"/><path d="M2 12h2"/><path d="M20 12h2"/><path d="m6.34 17.66-1.41 1.41"/><path d="m19.07 4.93-1.41 1.41"/></svg>,
-            Shirt: (props) => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}><path d="M20.38 3.46 16 2a4 4 0 0 1-8 0L3.62 3.46a2 2 0 0 0-1.34 2.23l.58 3.47a1 1 0 0 0 .99.84H6v10c0 1.1.9 2 2 2h8a2 2 0 0 0 2-2V10h2.15a1 1 0 0 0 .99-.84l.58-3.47a2 2 0 0 0-1.34-2.23z"/></svg>,
-            Sparkles: (props) => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}><path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L12 3Z"/><path d="M5 3v4"/><path d="M9 3v4"/><path d="M3 5h4"/><path d="M3 9h4"/></svg>,
-            Utensils: (props) => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}><path d="M3 2v7c0 1.1.9 2 2 2h4a2 2 0 0 0 2-2V2"/><path d="M7 2v20"/><path d="M21 15V2v0a5 5 0 0 0-5 5v6c0 1.1.9 2 2 2h3Zm0 0v7"/></svg>,
-            Footprints: (props) => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}><path d="M4 16v-2.38C4 11.5 2.97 10.5 3 8c.03-2.72 1.49-6 4.5-6C9.37 2 11 3.8 11 8c0 2.85-.67 5.5-2 8"/><path d="M20 20v-2.38c0-2.12 1.03-3.12 1-5.62-.03-2.72-1.49-6-4.5-6C14.63 6 13 7.8 13 12c0 2.85.67 5.5 2 8"/><path d="M16 17h4"/><path d="M4 16h4"/></svg>,
-            Backpack: (props) => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}><path d="M4 10a4 4 0 0 1 4-4h8a4 4 0 0 1 4 4v10a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2Z"/><path d="M9 6V4a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v2"/><path d="M8 21v-5a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v5"/><path d="M8 10h8"/><path d="M8 18h8"/></svg>,
-            DoorOpen: (props) => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}><path d="M13 4h3a2 2 0 0 1 2 2v14"/><path d="M2 20h3"/><path d="M13 20h9"/><path d="M10 12v.01"/><path d="M13 4.562v16.157a1 1 0 0 1-1.242.97L5 20V5.562a2 2 0 0 1 1.515-1.94l4-1A2 2 0 0 1 13 4.561Z"/></svg>,
+            Sun: (props) => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" {...props}><circle cx="12" cy="12" r="4"/><path d="M12 2v2"/><path d="M12 20v2"/><path d="m4.93 4.93 1.41 1.41"/><path d="m17.66 17.66 1.41 1.41"/><path d="M2 12h2"/><path d="M20 12h2"/><path d="m6.34 17.66-1.41 1.41"/><path d="m19.07 4.93-1.41 1.41"/></svg>,
+            Shirt: (props) => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" {...props}><path d="M20.38 3.46 16 2a4 4 0 0 1-8 0L3.62 3.46a2 2 0 0 0-1.34 2.23l.58 3.47a1 1 0 0 0 .99.84H6v10c0 1.1.9 2 2 2h8a2 2 0 0 0 2-2V10h2.15a1 1 0 0 0 .99-.84l.58-3.47a2 2 0 0 0-1.34-2.23z"/></svg>,
+            Sparkles: (props) => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" {...props}><path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L12 3Z"/><path d="M5 3v4"/><path d="M9 3v4"/><path d="M3 5h4"/><path d="M3 9h4"/></svg>,
+            Utensils: (props) => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" {...props}><path d="M3 2v7c0 1.1.9 2 2 2h4a2 2 0 0 0 2-2V2"/><path d="M7 2v20"/><path d="M21 15V2v0a5 5 0 0 0-5 5v6c0 1.1.9 2 2 2h3Zm0 0v7"/></svg>,
+            Footprints: (props) => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" {...props}><path d="M4 16v-2.38C4 11.5 2.97 10.5 3 8c.03-2.72 1.49-6 4.5-6C9.37 2 11 3.8 11 8c0 2.85-.67 5.5-2 8"/><path d="M20 20v-2.38c0-2.12 1.03-3.12 1-5.62-.03-2.72-1.49-6-4.5-6C14.63 6 13 7.8 13 12c0 2.85.67 5.5 2 8"/><path d="M16 17h4"/><path d="M4 16h4"/></svg>,
+            Backpack: (props) => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" {...props}><path d="M4 10a4 4 0 0 1 4-4h8a4 4 0 0 1 4 4v10a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2Z"/><path d="M9 6V4a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v2"/><path d="M8 21v-5a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v5"/><path d="M8 10h8"/><path d="M8 18h8"/></svg>,
+            DoorOpen: (props) => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" {...props}><path d="M13 4h3a2 2 0 0 1 2 2v14"/><path d="M2 20h3"/><path d="M13 20h9"/><path d="M10 12v.01"/><path d="M13 4.562v16.157a1 1 0 0 1-1.242.97L5 20V5.562a2 2 0 0 1 1.515-1.94l4-1A2 2 0 0 1 13 4.561Z"/></svg>,
             Star: (props) => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>,
             Gift: (props) => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}><polyline points="20 12 20 22 4 22 4 12"/><rect width="20" height="5" x="2" y="7"/><line x1="12" x2="12" y1="22" y2="7"/><path d="M12 7H7.5a2.5 2.5 0 0 1 0-5C11 2 12 7 12 7z"/><path d="M12 7h4.5a2.5 2.5 0 0 0 0-5C13 2 12 7 12 7z"/></svg>,
             Trophy: (props) => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"/><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"/><path d="M4 22h16"/><path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"/><path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"/><path d="M18 2H6v7a6 6 0 0 0 12 0V2Z"/></svg>,
@@ -62,42 +97,47 @@
             Flask: (props) => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="currentColor" {...props}><path d="M9.5 2v2.2c0 .3.2.6.4.8L11 6h2l1.1-1c.2-.2.4-.5.4-.8V2h-5zM5 21s0 1 1 1h12s1 0 1-1l-2-12H7L5 21z"/></svg>
         };
 
+        // --- Mascot Component ---
+        const Mascot = ({ type, position }) => {
+            // High quality, cute animal images
+            const images = {
+                bunny: "https://images.unsplash.com/photo-1585110396067-4a4244368291?auto=format&fit=crop&w=400&q=80",
+                puppy: "https://images.unsplash.com/photo-1591160690555-5debfba289f0?auto=format&fit=crop&w=400&q=80",
+                kitten: "https://images.unsplash.com/photo-1574158622682-e40e69881006?auto=format&fit=crop&w=400&q=80"
+            };
+            
+            return (
+                <div className={`absolute hidden md:block mascot-float z-10 ${position}`}>
+                    <div className="w-24 h-24 md:w-32 md:h-32 rounded-full border-4 border-white shadow-xl overflow-hidden bg-white">
+                        <img src={images[type]} alt={type} className="w-full h-full object-cover" />
+                    </div>
+                </div>
+            );
+        };
+
         // --- Potion Bottle Component ---
         const PotionBottle = ({ type, fillPercent, isActive, isLocked, isCollected }) => {
             const config = TARGETS[type];
-            // SVG Path for a potion bottle
             const bottlePath = "M15,5 V2 c0,-0.55 -0.45,-1 -1,-1 H10 c-0.55,0 -1,0.45 -1,1 V5 c-1.66,0 -3,1.34 -3,3 v9 c0,2.21 1.79,4 4,4 h4 c2.21,0 4,-1.79 4,-4 V8 c0,-1.66 -1.34,-3 -3,-3 z";
-            
-            // Calculate liquid height
-            // We need to map 0-100% to the SVG coordinate system (approx y=21 to y=8)
             const liquidHeight = Math.min(100, Math.max(0, fillPercent));
             const yOffset = 21 - (liquidHeight / 100 * 13);
 
             return (
-                <div className={`flex flex-col items-center transition-all duration-500 ${isActive ? 'scale-110 opacity-100' : 'scale-95 opacity-50'}`}>
-                    <div className="relative w-20 h-24 md:w-32 md:h-40">
-                        <svg viewBox="0 0 24 24" className="w-full h-full drop-shadow-xl overflow-visible">
+                <div className={`flex flex-col items-center transition-all duration-500 ${isActive ? 'scale-110 opacity-100' : 'scale-95 opacity-60'}`}>
+                    <div className="relative w-20 h-24 md:w-32 md:h-40 filter drop-shadow-xl">
+                        <svg viewBox="0 0 24 24" className="w-full h-full overflow-visible">
                             <defs>
                                 <clipPath id={`liquidMask-${type}`}>
                                     <path d={bottlePath} />
                                 </clipPath>
                             </defs>
-
                             {/* Glass Bottle Outline */}
-                            <path d={bottlePath} fill="none" stroke="rgba(0,0,0,0.2)" strokeWidth="1" />
-                            <path d={bottlePath} fill="rgba(255,255,255,0.3)" />
-
+                            <path d={bottlePath} fill="none" stroke="rgba(0,0,0,0.3)" strokeWidth="1.5" />
+                            <path d={bottlePath} fill="rgba(255,255,255,0.4)" />
+                            
                             {/* Liquid */}
                             <g clipPath={`url(#liquidMask-${type})`}>
-                                <rect 
-                                    x="0" 
-                                    y={yOffset} 
-                                    width="24" 
-                                    height="24" 
-                                    fill={config.color} 
-                                    className={isActive ? "liquid-wave" : ""}
-                                />
-                                {/* Bubbles if active */}
+                                <rect x="0" y={yOffset} width="24" height="24" fill={config.color} className={isActive ? "liquid-wave" : ""} />
                                 {isActive && (
                                     <>
                                         <circle cx="10" cy={yOffset + 2} r="0.5" fill="white" className="animate-bounce" style={{animationDuration: '2s'}} />
@@ -105,43 +145,40 @@
                                     </>
                                 )}
                             </g>
-
-                            {/* Cork (only if collected or active) */}
+                            {/* Cork */}
                             <rect x="9" y="0.5" width="6" height="2" fill="#8D6E63" rx="0.5" />
-                            
-                            {/* Reflection */}
-                            <path d="M16 9v8c0 1-.5 1.5-1 2" stroke="white" strokeWidth="1.5" strokeLinecap="round" opacity="0.4" fill="none" />
+                            {/* Highlights */}
+                            <path d="M16 9v8c0 1-.5 1.5-1 2" stroke="white" strokeWidth="1.5" strokeLinecap="round" opacity="0.6" fill="none" />
                         </svg>
                         
                         {/* Status Badge */}
-                        <div className="absolute -bottom-2 -right-2 bg-white rounded-full p-1 shadow-md border">
+                        <div className="absolute -bottom-3 -right-2 bg-white rounded-full p-1.5 shadow-md border-2 border-indigo-50">
                             {isCollected ? (
                                 <span className="text-xl">✅</span>
                             ) : (
                                 <div className="flex items-center gap-0.5 px-1">
                                     <span className="font-bold text-sm text-gray-700">{config.stars}</span>
-                                    <Icons.Star className="w-3 h-3 text-yellow-400 fill-yellow-400" />
+                                    <Icons.Star className="w-3.5 h-3.5 text-yellow-400 fill-yellow-400" />
                                 </div>
                             )}
                         </div>
                     </div>
-                    <div className="mt-2 text-center">
-                        <div className={`font-bold text-sm md:text-base ${isActive ? 'text-gray-800' : 'text-gray-400'}`}>{config.name}</div>
+                    <div className="mt-3 text-center">
+                        <div className={`font-bold text-sm md:text-base px-3 py-1 rounded-full ${isActive ? 'bg-white/80 text-indigo-900 shadow-sm' : 'text-gray-500'}`}>{config.name}</div>
                     </div>
                 </div>
             );
         };
 
         function MorningApp() {
-            // --- State ---
-            const [view, setView] = useState('dashboard'); // 'dashboard' | 'trophyRoom' | 'victory'
+            const [view, setView] = useState('dashboard');
             const [tasks, setTasks] = useState([
-                { id: 1, text: 'לקום עם חיוך', icon: <Icons.Sun />, completed: false, color: 'text-yellow-500 bg-yellow-50 border-yellow-200' },
-                { id: 2, text: 'להתלבש יפה', icon: <Icons.Shirt />, completed: false, color: 'text-pink-500 bg-pink-50 border-pink-200' },
-                { id: 3, text: 'לצחצח שיניים', icon: <Icons.Sparkles />, completed: false, color: 'text-blue-500 bg-blue-50 border-blue-200' },
-                { id: 4, text: 'לאכול ארוחת בוקר', icon: <Icons.Utensils />, completed: false, color: 'text-orange-500 bg-orange-50 border-orange-200' },
-                { id: 5, text: 'לנעול נעליים', icon: <Icons.Footprints />, completed: false, color: 'text-purple-500 bg-purple-50 border-purple-200' },
-                { id: 6, text: 'לקחת את התיק', icon: <Icons.Backpack />, completed: false, color: 'text-red-500 bg-red-50 border-red-200' },
+                { id: 1, text: 'לקום עם חיוך', icon: <Icons.Sun />, completed: false, color: 'text-yellow-600 bg-yellow-50 border-yellow-200' },
+                { id: 2, text: 'להתלבש יפה', icon: <Icons.Shirt />, completed: false, color: 'text-pink-600 bg-pink-50 border-pink-200' },
+                { id: 3, text: 'לצחצח שיניים', icon: <Icons.Sparkles />, completed: false, color: 'text-cyan-600 bg-cyan-50 border-cyan-200' },
+                { id: 4, text: 'לאכול ארוחת בוקר', icon: <Icons.Utensils />, completed: false, color: 'text-orange-600 bg-orange-50 border-orange-200' },
+                { id: 5, text: 'לנעול נעליים', icon: <Icons.Footprints />, completed: false, color: 'text-purple-600 bg-purple-50 border-purple-200' },
+                { id: 6, text: 'לקחת את התיק', icon: <Icons.Backpack />, completed: false, color: 'text-red-600 bg-red-50 border-red-200' },
             ]);
             
             const [isTimerRunning, setIsTimerRunning] = useState(false);
@@ -149,34 +186,23 @@
             const [userData, setUserData] = useState({ history: [], stars: 0, giftsUnlocked: 0 });
             const [justEarned, setJustEarned] = useState(null);
 
-            // --- Effects ---
-            
-            // Load Data
             useEffect(() => {
                 const saved = localStorage.getItem(STORAGE_KEY);
-                if (saved) {
-                    setUserData(JSON.parse(saved));
-                }
+                if (saved) setUserData(JSON.parse(saved));
             }, []);
 
-            // Timer Logic
             useEffect(() => {
                 let interval = null;
                 if (isTimerRunning) {
-                    interval = setInterval(() => {
-                        setElapsedSeconds(prev => prev + 1);
-                    }, 1000);
+                    interval = setInterval(() => setElapsedSeconds(prev => prev + 1), 1000);
                 }
                 return () => clearInterval(interval);
             }, [isTimerRunning]);
 
-            // Save Data Helper
             const saveData = (newData) => {
                 setUserData(newData);
                 localStorage.setItem(STORAGE_KEY, JSON.stringify(newData));
             };
-
-            // --- Logic Helpers ---
 
             const getCurrentPhase = () => {
                 if (elapsedSeconds <= TARGETS.BLUE.limit) return 'BLUE';
@@ -185,24 +211,18 @@
             };
 
             const getFillPercent = (type) => {
-                // If we passed this bottle completely, it's either "full" (if collected) or empty/broken logic.
-                // The prompt says: "If >30m: The Blue Bottle disappears (evaporates). The Green Bottle starts filling."
-                // So passed bottles are 0%.
-                
                 const currentPhase = getCurrentPhase();
-                
                 if (type === 'BLUE') {
-                    if (currentPhase !== 'BLUE') return 0; // Evaporated
+                    if (currentPhase !== 'BLUE') return 0;
                     return (elapsedSeconds / TARGETS.BLUE.limit) * 100;
                 }
                 if (type === 'GREEN') {
-                    if (elapsedSeconds <= TARGETS.BLUE.limit) return 0; // Hasn't started
-                    if (currentPhase === 'PURPLE') return 0; // Evaporated
+                    if (elapsedSeconds <= TARGETS.BLUE.limit) return 0;
+                    if (currentPhase === 'PURPLE') return 0;
                     return ((elapsedSeconds - TARGETS.BLUE.limit) / TARGETS.GREEN.duration) * 100;
                 }
                 if (type === 'PURPLE') {
                     if (elapsedSeconds <= TARGETS.GREEN.limit) return 0;
-                    // Cap at 100%
                     return Math.min(100, ((elapsedSeconds - TARGETS.GREEN.limit) / TARGETS.PURPLE.duration) * 100);
                 }
                 return 0;
@@ -210,53 +230,25 @@
 
             const toggleTask = (id) => {
                 setTasks(tasks.map(t => t.id === id ? { ...t, completed: !t.completed } : t));
-                if (!isTimerRunning && tasks.every(t => !t.completed)) {
-                    setIsTimerRunning(true);
-                }
+                if (!isTimerRunning && tasks.every(t => !t.completed)) setIsTimerRunning(true);
             };
 
             const handleFinish = () => {
                 setIsTimerRunning(false);
                 const phase = getCurrentPhase();
                 const earnedBottle = TARGETS[phase];
-                
-                // Construct result
                 const today = new Date().toISOString().split('T')[0];
-                const result = {
-                    date: today,
-                    bottleId: earnedBottle.id,
-                    stars: earnedBottle.stars,
-                    totalTime: elapsedSeconds
-                };
-
-                // Update Storage
-                const newData = {
-                    ...userData,
-                    history: [...userData.history, result],
-                    stars: userData.stars + earnedBottle.stars
-                };
+                const result = { date: today, bottleId: earnedBottle.id, stars: earnedBottle.stars, totalTime: elapsedSeconds };
+                const newData = { ...userData, history: [...userData.history, result], stars: userData.stars + earnedBottle.stars };
                 saveData(newData);
-                
-                // Show Victory
                 setJustEarned(earnedBottle);
                 setView('victory');
-                
-                // Celebration Confetti
-                confetti({
-                    particleCount: 150,
-                    spread: 70,
-                    origin: { y: 0.6 },
-                    colors: [earnedBottle.color, '#FFD700', '#ffffff']
-                });
+                confetti({ particleCount: 200, spread: 100, origin: { y: 0.6 }, colors: [earnedBottle.color, '#FFD700', '#ffffff'] });
             };
 
             const handleGiftOpen = () => {
                 if (userData.stars >= STARS_FOR_GIFT) {
-                    const newData = {
-                        ...userData,
-                        stars: userData.stars - STARS_FOR_GIFT,
-                        giftsUnlocked: userData.giftsUnlocked + 1
-                    };
+                    const newData = { ...userData, stars: userData.stars - STARS_FOR_GIFT, giftsUnlocked: userData.giftsUnlocked + 1 };
                     saveData(newData);
                     confetti({ particleCount: 300, spread: 360 });
                     alert("🎁 כל הכבוד! זכית בפרס מהקופסה!");
@@ -270,54 +262,43 @@
                 setView('dashboard');
             };
 
-            // --- Render Components ---
-
             const renderDashboard = () => {
                 const currentPhase = getCurrentPhase();
-                
                 return (
-                    <div className="max-w-4xl mx-auto p-4 flex flex-col gap-6">
+                    <div className="max-w-4xl mx-auto p-4 flex flex-col gap-6 relative">
+                        {/* Mascots */}
+                        <Mascot type="bunny" position="-top-4 -left-12 rotate-[-10deg]" />
+                        <Mascot type="puppy" position="-top-4 -right-12 rotate-[10deg]" />
+
                         {/* Header */}
-                        <div className="flex justify-between items-center">
+                        <div className="glass-panel rounded-full px-6 py-3 flex justify-between items-center shadow-sm z-20">
                             <div>
-                                <h1 className="text-2xl font-bold text-indigo-900">בוקר טוב, אלופה! ☀️</h1>
-                                <p className="text-indigo-600">בואי נמלא את השיקוי!</p>
+                                <h1 className="text-xl md:text-2xl font-bold text-indigo-900 flex items-center gap-2">
+                                    <span>בוקר קסום</span>
+                                    <span className="text-2xl">🦋</span>
+                                </h1>
                             </div>
-                            <button 
-                                onClick={() => setView('trophyRoom')}
-                                className="bg-white p-3 rounded-2xl shadow-sm border border-indigo-100 flex items-center gap-2 hover:bg-indigo-50 transition"
-                            >
-                                <Icons.Trophy className="w-6 h-6 text-yellow-500" />
+                            <button onClick={() => setView('trophyRoom')} className="bg-white/50 px-4 py-2 rounded-full border border-white flex items-center gap-2 hover:bg-white transition">
+                                <Icons.Trophy className="w-5 h-5 text-yellow-500" />
                                 <span className="font-bold text-indigo-900">{userData.stars}</span>
                             </button>
                         </div>
 
                         {/* Potions Stage */}
-                        <div className="bg-white rounded-3xl shadow-xl p-6 border-4 border-indigo-50 relative overflow-hidden">
-                            <div className="absolute top-0 left-0 w-full h-2 bg-gray-100">
-                                {/* Time Progress Bar just for visual reference */}
-                                <div 
-                                    className="h-full bg-indigo-200 transition-all duration-1000" 
-                                    style={{width: `${(elapsedSeconds / TARGETS.PURPLE.limit) * 100}%`}}
-                                ></div>
-                            </div>
-
-                            <div className="flex justify-center items-end gap-2 md:gap-8 mt-4 min-h-[180px]">
+                        <div className="glass-panel rounded-3xl p-6 relative overflow-hidden z-10">
+                            <div className="flex justify-center items-end gap-4 md:gap-10 mt-2 min-h-[180px]">
                                 <PotionBottle type="BLUE" fillPercent={getFillPercent('BLUE')} isActive={currentPhase === 'BLUE'} />
                                 <PotionBottle type="GREEN" fillPercent={getFillPercent('GREEN')} isActive={currentPhase === 'GREEN'} />
                                 <PotionBottle type="PURPLE" fillPercent={getFillPercent('PURPLE')} isActive={currentPhase === 'PURPLE'} />
                             </div>
                             
-                            <div className="mt-6 text-center">
+                            <div className="mt-8 text-center relative z-20">
                                 {!isTimerRunning && elapsedSeconds === 0 ? (
-                                    <button 
-                                        onClick={() => setIsTimerRunning(true)}
-                                        className="bg-indigo-600 text-white px-8 py-3 rounded-full text-xl font-bold shadow-lg hover:scale-105 transition animate-bounce"
-                                    >
-                                        התחילי את הבוקר! ▶️
+                                    <button onClick={() => setIsTimerRunning(true)} className="bg-gradient-to-r from-indigo-500 to-purple-600 text-white px-8 py-3 rounded-full text-xl font-bold shadow-lg hover:scale-105 transition animate-bounce border-2 border-white/30">
+                                        התחילי את הקסם! ✨
                                     </button>
                                 ) : (
-                                    <div className="text-2xl font-mono text-gray-400 font-bold">
+                                    <div className="inline-block bg-white/60 backdrop-blur px-6 py-2 rounded-xl text-2xl font-mono text-indigo-900 font-bold border border-white/50">
                                         {new Date(elapsedSeconds * 1000).toISOString().substr(14, 5)}
                                     </div>
                                 )}
@@ -325,23 +306,21 @@
                         </div>
 
                         {/* Task List */}
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 z-10">
                             {tasks.map(task => (
-                                <div 
-                                    key={task.id}
-                                    onClick={() => toggleTask(task.id)}
+                                <div key={task.id} onClick={() => toggleTask(task.id)} 
                                     className={`
-                                        p-4 rounded-xl border-2 cursor-pointer transition-all duration-200 flex items-center gap-4
-                                        ${task.completed ? 'bg-gray-50 border-gray-200 opacity-60 grayscale' : `${task.color} bg-white hover:scale-[1.02]`}
+                                        glass-card p-4 rounded-2xl cursor-pointer transition-all duration-200 flex items-center gap-4 group
+                                        ${task.completed ? 'bg-gray-100/50 grayscale opacity-70' : 'hover:scale-[1.02] hover:bg-white/90'}
                                     `}
                                 >
-                                    <div className={`p-2 rounded-full ${task.completed ? 'bg-gray-200' : 'bg-white'}`}>
-                                        {React.cloneElement(task.icon, { className: "w-6 h-6" })}
+                                    <div className={`p-3 rounded-full transition-colors ${task.completed ? 'bg-gray-200' : 'bg-white shadow-sm'}`}>
+                                        {React.cloneElement(task.icon, { className: `w-6 h-6 ${task.completed ? 'text-gray-400' : task.color.split(' ')[0]}` })}
                                     </div>
-                                    <span className={`font-bold text-lg flex-grow ${task.completed ? 'line-through text-gray-400' : 'text-gray-800'}`}>
+                                    <span className={`font-bold text-lg flex-grow ${task.completed ? 'line-through text-gray-500' : 'text-gray-800'}`}>
                                         {task.text}
                                     </span>
-                                    <div className={`w-8 h-8 rounded-full border-2 flex items-center justify-center ${task.completed ? 'bg-green-500 border-green-500' : 'bg-white border-gray-300'}`}>
+                                    <div className={`w-8 h-8 rounded-full border-2 flex items-center justify-center transition-all ${task.completed ? 'bg-green-500 border-green-500 scale-110' : 'bg-white/50 border-gray-300 group-hover:border-indigo-300'}`}>
                                         {task.completed && <span className="text-white font-bold">✓</span>}
                                     </div>
                                 </div>
@@ -349,91 +328,69 @@
                         </div>
 
                         {/* Finish Button */}
-                        <div className="sticky bottom-4">
-                            <button 
-                                onClick={handleFinish}
-                                disabled={!isTimerRunning}
+                        <div className="sticky bottom-4 z-30">
+                            <button onClick={handleFinish} disabled={!isTimerRunning}
                                 className={`
-                                    w-full py-4 rounded-2xl text-2xl font-bold shadow-xl text-white transition-all transform
-                                    ${isTimerRunning ? 'bg-gradient-to-r from-green-400 to-emerald-600 hover:scale-[1.02] active:scale-95' : 'bg-gray-300 cursor-not-allowed'}
+                                    w-full py-4 rounded-2xl text-2xl font-bold shadow-xl text-white transition-all transform border-2 border-white/30 backdrop-blur-sm
+                                    ${isTimerRunning ? 'bg-gradient-to-r from-emerald-400 to-teal-600 hover:scale-[1.02] active:scale-95' : 'bg-gray-300/80 cursor-not-allowed'}
                                 `}
                             >
-                                אני מוכנה! 🎉
+                                סיימתי הכל! 🎉
                             </button>
                         </div>
                         
-                        <div className="text-center">
-                            <button onClick={resetDay} className="text-gray-400 text-sm underline">איפוס יום</button>
+                        <div className="text-center pb-8">
+                            <button onClick={resetDay} className="text-gray-500 text-sm hover:text-indigo-600 font-bold bg-white/40 px-3 py-1 rounded-lg">איפוס יום</button>
                         </div>
                     </div>
                 );
             };
 
             const renderTrophyRoom = () => {
-                // Generate Calendar Grid (Simulated for this month)
-                const days = Array.from({length: 30}, (_, i) => {
-                    // Check if we have history for this day (simulating relative dates for demo)
-                    // In a real app, match date strings.
-                    const match = userData.history[i]; // Just mapping index to history for demo visualization
-                    return match;
-                });
-
                 return (
-                    <div className="max-w-4xl mx-auto p-4 min-h-screen bg-indigo-50">
-                        {/* Header */}
+                    <div className="max-w-4xl mx-auto p-4 min-h-screen">
                         <div className="flex items-center gap-4 mb-6">
-                            <button onClick={() => setView('dashboard')} className="p-2 bg-white rounded-full shadow hover:bg-gray-50">
+                            <button onClick={() => setView('dashboard')} className="p-3 bg-white rounded-full shadow hover:bg-gray-50">
                                 <Icons.ArrowLeft />
                             </button>
-                            <h1 className="text-2xl font-bold text-indigo-900">חדר הגביעים שלך 🏆</h1>
+                            <h1 className="text-2xl font-bold text-white drop-shadow-md">חדר הגביעים שלך 🏆</h1>
                         </div>
 
-                        {/* Star Progress */}
-                        <div className="bg-white rounded-3xl p-6 shadow-lg mb-6 border-b-4 border-yellow-200">
+                        <div className="glass-panel rounded-3xl p-6 shadow-lg mb-6">
                             <div className="flex justify-between items-center mb-2">
-                                <span className="font-bold text-gray-600">הכוכבים שלי</span>
+                                <span className="font-bold text-gray-700">הכוכבים שלי</span>
                                 <span className="font-bold text-xl text-yellow-500">{userData.stars} / {STARS_FOR_GIFT}</span>
                             </div>
-                            <div className="w-full bg-gray-100 rounded-full h-6 overflow-hidden relative">
-                                <div 
-                                    className="bg-yellow-400 h-full transition-all duration-1000"
-                                    style={{width: `${Math.min(100, (userData.stars / STARS_FOR_GIFT) * 100)}%`}}
-                                ></div>
+                            <div className="w-full bg-gray-200 rounded-full h-6 overflow-hidden relative border border-gray-300">
+                                <div className="bg-gradient-to-r from-yellow-300 to-yellow-500 h-full transition-all duration-1000" style={{width: `${Math.min(100, (userData.stars / STARS_FOR_GIFT) * 100)}%`}}></div>
                             </div>
                             
-                            {/* Gift Box */}
                             <div className="mt-6 flex justify-center">
-                                <button 
-                                    onClick={handleGiftOpen}
-                                    disabled={userData.stars < STARS_FOR_GIFT}
-                                    className={`
-                                        flex flex-col items-center gap-2 transition-all duration-300
-                                        ${userData.stars >= STARS_FOR_GIFT ? 'scale-110 cursor-pointer animate-pulse' : 'opacity-50 grayscale'}
-                                    `}
+                                <button onClick={handleGiftOpen} disabled={userData.stars < STARS_FOR_GIFT}
+                                    className={`flex flex-col items-center gap-2 transition-all duration-300 ${userData.stars >= STARS_FOR_GIFT ? 'scale-110 cursor-pointer animate-pulse' : 'opacity-60 grayscale'}`}
                                 >
-                                    <div className="bg-pink-100 p-4 rounded-2xl border-2 border-pink-200">
-                                        <Icons.Gift className="w-12 h-12 text-pink-500" />
+                                    <div className="bg-pink-100 p-5 rounded-2xl border-4 border-pink-200 shadow-lg">
+                                        <Icons.Gift className="w-16 h-16 text-pink-500" />
                                     </div>
-                                    <span className="font-bold text-pink-600">
+                                    <span className="font-bold text-pink-600 bg-white/80 px-4 py-1 rounded-full">
                                         {userData.stars >= STARS_FOR_GIFT ? "לחצי כדי לפתוח!" : "עוד קצת..."}
                                     </span>
                                 </button>
                             </div>
                         </div>
 
-                        {/* History Grid */}
-                        <div className="bg-white rounded-3xl p-6 shadow-lg">
+                        <div className="glass-panel rounded-3xl p-6 shadow-lg">
                             <h3 className="font-bold text-gray-700 mb-4">ההיסטוריה שלי</h3>
                             {userData.history.length === 0 ? (
-                                <p className="text-center text-gray-400 py-8">עדיין לא אספת שיקויים. התחילי מחר בבוקר!</p>
+                                <p className="text-center text-gray-500 py-8">עדיין לא אספת שיקויים. התחילי מחר בבוקר!</p>
                             ) : (
                                 <div className="space-y-3">
                                     {[...userData.history].reverse().map((entry, idx) => {
                                         const bottleInfo = Object.values(TARGETS).find(t => t.id === entry.bottleId);
                                         return (
-                                            <div key={idx} className="flex items-center justify-between p-3 bg-gray-50 rounded-xl border border-gray-100">
+                                            <div key={idx} className="flex items-center justify-between p-3 bg-white/60 rounded-xl border border-white/50 backdrop-blur-sm">
                                                 <div className="flex items-center gap-3">
-                                                    <div className={`w-10 h-10 rounded-full ${bottleInfo.bg} flex items-center justify-center`}>
+                                                    <div className={`w-12 h-12 rounded-full ${bottleInfo.bg} flex items-center justify-center border-2 border-white shadow-sm`}>
                                                         <Icons.Flask className={`w-6 h-6 ${bottleInfo.id === 'blue' ? 'text-cyan-500' : bottleInfo.id === 'green' ? 'text-green-500' : 'text-purple-500'}`} />
                                                     </div>
                                                     <div>
@@ -441,8 +398,8 @@
                                                         <div className="text-xs text-gray-500">{entry.date}</div>
                                                     </div>
                                                 </div>
-                                                <div className="flex items-center gap-1 bg-white px-2 py-1 rounded-lg border border-gray-200">
-                                                    <span className="font-bold">{entry.stars}</span>
+                                                <div className="flex items-center gap-1 bg-white px-3 py-1 rounded-full border border-gray-200 shadow-sm">
+                                                    <span className="font-bold text-gray-700">{entry.stars}</span>
                                                     <Icons.Star className="w-4 h-4 text-yellow-400 fill-yellow-400" />
                                                 </div>
                                             </div>
@@ -458,23 +415,25 @@
             const renderVictory = () => {
                 if (!justEarned) return null;
                 return (
-                    <div className="min-h-screen bg-indigo-900 flex flex-col items-center justify-center p-4 text-center text-white">
-                        <h2 className="text-4xl font-bold mb-2 text-yellow-300">כל הכבוד!</h2>
-                        <p className="text-indigo-200 text-xl mb-8">הצלחת לאסוף את...</p>
+                    <div className="min-h-screen bg-indigo-900/90 backdrop-blur-md flex flex-col items-center justify-center p-4 text-center text-white relative overflow-hidden">
+                         {/* Background Confetti/Glow */}
+                        <div className="absolute inset-0 bg-gradient-to-b from-transparent to-indigo-900 z-0"></div>
                         
-                        <div className="scale-150 mb-8">
+                        <div className="z-10 animate-bounce">
+                             <h2 className="text-5xl font-bold mb-2 text-transparent bg-clip-text bg-gradient-to-r from-yellow-200 to-yellow-500 drop-shadow-sm">כל הכבוד!</h2>
+                        </div>
+                        
+                        <div className="scale-150 mb-12 mt-8 z-10 relative">
+                             <div className="absolute inset-0 bg-white/20 blur-3xl rounded-full"></div>
                             <PotionBottle type={justEarned.id.toUpperCase()} fillPercent={100} isActive={true} isCollected={false} />
                         </div>
                         
-                        <div className="bg-white/10 backdrop-blur-md p-6 rounded-3xl border border-white/20 mb-8 w-full max-w-sm">
-                            <div className="text-3xl font-bold mb-2">+{justEarned.stars} כוכבים</div>
-                            <div className="text-indigo-200">נוספו לאוסף שלך</div>
+                        <div className="glass-panel p-8 rounded-3xl mb-12 w-full max-w-sm z-10 transform hover:scale-105 transition duration-500">
+                            <div className="text-5xl font-bold mb-2 text-indigo-900">+{justEarned.stars}</div>
+                            <div className="text-indigo-600 font-bold text-xl">כוכבים נוספו לאוסף</div>
                         </div>
 
-                        <button 
-                            onClick={() => setView('trophyRoom')}
-                            className="bg-yellow-400 text-yellow-900 px-8 py-3 rounded-full text-xl font-bold shadow-xl hover:scale-105 transition"
-                        >
+                        <button onClick={() => setView('trophyRoom')} className="bg-gradient-to-r from-yellow-400 to-orange-500 text-white px-10 py-4 rounded-full text-xl font-bold shadow-2xl hover:scale-110 transition z-10 border-4 border-white/20">
                             לחדר הגביעים 🏆
                         </button>
                     </div>
